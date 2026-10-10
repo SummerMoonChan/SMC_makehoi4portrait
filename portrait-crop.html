@@ -32,11 +32,11 @@ body{margin:0;background:#202326;color:#eee;font:16px system-ui}main{max-width:1
 const file=document.getElementById('file'),multiple=document.getElementById('multiple'),slider=document.getElementById('slider'),size=document.getElementById('size'),status=document.getElementById('status'),canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d');
 let img=null,x=0,y=0,n=6,limit=60,scale=1,drag=null,name='portrait',loadToken=0;
 const preview=document.getElementById('preview'),backgroundFile=document.getElementById('backgroundFile'),backgroundStatus=document.getElementById('backgroundStatus');
-let background=null,backgroundToken=0;
+let background=null,backgroundToken=0,renderVersion=0;const displayImage=document.createElement('canvas');
 const advisorPreview=document.getElementById('advisorPreview'),advisorStatus=document.getElementById('advisorStatus'),advisorFile=document.getElementById('advisorFile');
 let advisor=null,advisorToken=0,advisorFrame=0;
 function queueAdvisor(){renderOutput(!drag&&!sliderActive);}
-function renderAdvisor(highQuality=true){
+async function renderAdvisor(highQuality=true,version=renderVersion){
  if(!advisor||!img){advisorPreview.hidden=true;return;}
  if(img.naturalWidth<64||img.naturalHeight<64){advisorPreview.hidden=true;advisorStatus.textContent='小顾问人物原图的宽和高均须至少 64 像素。';return;}
  const factor=highQuality?1:Math.min(1,210/(35*n));const w=Math.round(26*n*factor),h=Math.round(35*n*factor);
@@ -49,7 +49,7 @@ function renderAdvisor(highQuality=true){
  const r=rotated.getContext('2d');r.imageSmoothingQuality='high';r.translate(rotated.width/2,rotated.height/2);r.rotate(angle);r.drawImage(source,-w/2,-h/2);
  const out=document.createElement('canvas');out.width=advisor.naturalWidth;out.height=advisor.naturalHeight;
  const p=out.getContext('2d');p.imageSmoothingEnabled=true;p.imageSmoothingQuality='high';
- if(highQuality)p.drawImage(resizeLanczos(rotated,42,55),3,5);else p.drawImage(rotated,3,5,42,55);
+ if(highQuality){const resized=await resizeLanczos(rotated,42,55,version);if(!resized||version!==renderVersion)return;p.drawImage(resized,3,5);}else p.drawImage(rotated,3,5,42,55);
  p.drawImage(advisor,0,0);
  advisorPreview.src=out.toDataURL('image/png');advisorPreview.hidden=false;
  advisorStatus.textContent=`成品 ${out.width} × ${out.height}；advisor.png 位于上层。`;
@@ -77,18 +77,18 @@ function lanczosWeights(sourceSize,targetSize){
   return weights.map(([j,v])=>[j,v/sum]);
  });
 }
-function lanczosPixels(data,sw,sh,dw,dh){
+async function lanczosPixels(data,sw,sh,dw,dh,version=renderVersion){
  const wx=lanczosWeights(sw,dw),wy=lanczosWeights(sh,dh),temp=new Float32Array(dw*sh*4),out=new Uint8ClampedArray(dw*dh*4);
- for(let y=0;y<sh;y++)for(let x=0;x<dw;x++){
+ for(let y=0;y<sh;y++){if(y%8===0){await new Promise(resolve=>setTimeout(resolve,0));if(version!==renderVersion)return null;}for(let x=0;x<dw;x++){
   const k=(y*dw+x)*4;
   for(const [sx,v] of wx[x]){const j=(y*sw+sx)*4,a=data[j+3]/255;for(let c=0;c<3;c++)temp[k+c]+=data[j+c]*a*v;temp[k+3]+=a*v;}
- }
- for(let y=0;y<dh;y++)for(let x=0;x<dw;x++){
+ }}
+ for(let y=0;y<dh;y++){if(y%8===0){await new Promise(resolve=>setTimeout(resolve,0));if(version!==renderVersion)return null;}for(let x=0;x<dw;x++){
   const k=(y*dw+x)*4;let a=0,r=0,g=0,b=0;
   for(const [sy,v] of wy[y]){const j=(sy*dw+x)*4;r+=temp[j]*v;g+=temp[j+1]*v;b+=temp[j+2]*v;a+=temp[j+3]*v;}
   out[k+3]=Math.max(0,Math.min(1,a))*255;
   if(a>1e-6){out[k]=r/a;out[k+1]=g/a;out[k+2]=b/a;}
- }
+ }}
  return out;
 }
 function sharpenPixels(data,w,h,amount=.22){
@@ -100,9 +100,9 @@ function sharpenPixels(data,w,h,amount=.22){
  }
  return result;
 }
-function resizeLanczos(source,w,h){
+async function resizeLanczos(source,w,h,version=renderVersion){
  const input=source.getContext('2d').getImageData(0,0,source.width,source.height);
- const pixels=lanczosPixels(input.data,source.width,source.height,w,h);
+ const pixels=await lanczosPixels(input.data,source.width,source.height,w,h,version);if(!pixels||version!==renderVersion)return null;
  const out=document.createElement('canvas');out.width=w;out.height=h;
  out.getContext('2d').putImageData(new ImageData(sharpenPixels(pixels,w,h),w,h),0,0);return out;
 }
@@ -114,13 +114,13 @@ function cropSource(){
  return source;
 }
 let outputFrame=0,qualityTimer=0,sliderActive=false;
-function cancelQuality(){clearTimeout(qualityTimer);cancelAnimationFrame(outputFrame);cancelAnimationFrame(advisorFrame);}
+function cancelQuality(){renderVersion++;clearTimeout(qualityTimer);cancelAnimationFrame(outputFrame);cancelAnimationFrame(advisorFrame);}
 function renderOutput(highQuality=true){
- cancelQuality();
- outputFrame=requestAnimationFrame(()=>{
+ cancelQuality();const version=renderVersion;
+ outputFrame=requestAnimationFrame(async()=>{
   if(img){
    let out;
-   if(highQuality)out=resizeLanczos(cropSource(),156,210);
+   if(highQuality){out=await resizeLanczos(cropSource(),156,210,version);if(!out||version!==renderVersion)return;}
    else{
     out=document.createElement('canvas');out.width=156;out.height=210;const p=out.getContext('2d');
     if(background)p.drawImage(background,0,0,156,210);
@@ -128,7 +128,7 @@ function renderOutput(highQuality=true){
    }
    preview.src=out.toDataURL('image/png');
   }
-  renderAdvisor(highQuality);
+  await renderAdvisor(highQuality,version);if(version!==renderVersion)return;
   preview.title=advisorPreview.title=highQuality?'清晰成品，可右键保存':'快速预览，松手后生成清晰成品';
  });
 }
@@ -145,7 +145,7 @@ loadBackground('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABhgAAAg0CAYAAABLQ3
 function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
 function draw(highQuality=true){
  if(!img)return;
- ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+ ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(displayImage,0,0);
  const a=x*scale,b=y*scale,w=26*n*scale,h=35*n*scale;
  ctx.fillStyle='rgba(0,0,0,.6)';ctx.beginPath();ctx.rect(0,0,canvas.width,canvas.height);ctx.rect(a,b,w,h);ctx.fill('evenodd');
  ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(a,b,w,h);
@@ -165,6 +165,7 @@ file.addEventListener('change',async()=>{
  img=candidate;name=f.name.replace(/\.[^.]+$/,'');limit=max;n=Math.min(6,limit);drag=null;
  scale=Math.min(1,1000/img.naturalWidth,700/img.naturalHeight);
  canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+ displayImage.width=canvas.width;displayImage.height=canvas.height;displayImage.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
  // Use the same scale on both axes; rounding affects only the outermost display edge.
  x=Math.floor((img.naturalWidth-26*n)/2);y=Math.floor((img.naturalHeight-35*n)/2);
  multiple.max=slider.max=limit;multiple.disabled=slider.disabled=false;
