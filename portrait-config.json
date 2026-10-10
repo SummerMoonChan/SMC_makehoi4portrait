@@ -1,0 +1,6 @@
+{
+  "background": "background.png",
+  "advisor": "advisor.png",
+  "portrait_dir": "output/portraits",
+  "advisor_dir": "output/advisors"
+}
