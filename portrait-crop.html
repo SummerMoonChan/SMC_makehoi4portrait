@@ -5,11 +5,29 @@
 <title>钢四头像裁剪</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#202326;color:#eee;font:15px system-ui}main{max-width:1240px;margin:22px auto;padding:0 22px}h1{font-size:23px;margin:0 0 20px}h2{font-size:15px;font-weight:500;margin:0 0 14px}.workspace{display:grid;grid-template-columns:minmax(300px,.85fr) minmax(460px,1.15fr);gap:24px;align-items:start}.crop-panel,.right-panel{min-width:0}.crop-panel{padding:16px;background:#292d31;border-radius:8px}header{margin:0 0 16px}header label{display:block}#file{display:block;max-width:100%;margin-top:10px}.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}button,input{font:inherit}button{padding:7px 11px;cursor:pointer}button:disabled{cursor:default}input[type=number]{width:76px}input[type=range]{width:100%;margin:2px 0;order:3}input[type=text]{padding:5px 7px;min-width:0}#size{font-size:13px;color:#bbb}canvas{display:block;max-width:100%;background:#333;touch-action:none;cursor:move}#canvas{width:100%;max-width:420px;height:auto;margin:12px auto 0}.hint,p,small{color:#bbb}.hint{font-size:13px;line-height:1.6}#status{font-size:13px;min-height:20px}.config-panel{padding:16px;background:#292d31;border-radius:8px}.config-panel summary{font-size:16px;cursor:pointer}#localPanel>p{font-size:13px;line-height:1.6;margin:12px 0}#localPanel .controls>label:has(input[type=text]){flex:1 1 260px;display:flex;flex-direction:column;gap:5px;font-size:13px}#localPanel input[type=text]{width:100%}#localPanel .controls:has([data-choose]){align-items:end}#localPanel [data-choose]{flex:0 0 auto}#localStatus{white-space:pre-wrap;overflow-wrap:anywhere}.preview-panel{margin-top:16px;padding:18px;background:#292d31;border-radius:8px;display:grid;grid-template-columns:1fr 1fr;gap:20px}.preview-item{min-width:0}.preview-item img[hidden]{display:none}.preview-item img{display:block;max-width:100%;height:auto}.checker{background:repeating-conic-gradient(#555 0% 25%,#777 0% 50%) 0 / 16px 16px}.preview-item small{display:block;margin-top:10px;font-size:12px;line-height:1.6}.preview-note{grid-column:1/-1;font-size:12px;line-height:1.6;margin:0}@media(max-width:850px){.workspace{grid-template-columns:1fr}.crop-panel{max-width:520px;width:100%;justify-self:center}}@media(max-width:420px){main{padding:0 12px}.preview-panel{gap:12px;padding:12px}button{padding:7px 9px}}
+.output-panel{margin-top:0;padding:16px;background:#292d31;border-radius:8px}.output-fields{align-items:end}.filename-label{flex:1 1 180px;display:flex;flex-direction:column;gap:6px}.filename-label input{width:100%}.save-buttons button{flex:1 1 130px}.output-panel #localStatus{font-size:13px;line-height:1.6;margin:12px 0 0}
+
+.config-panel{margin-top:16px}.tag-label{display:flex;flex-direction:column;gap:6px;flex:0 0 80px}.tag-label input{width:80px}.overwrite-label{font-size:13px;white-space:nowrap;padding-bottom:6px}.filename-hint{display:block;font-size:12px;line-height:1.6}.save-buttons{margin-top:16px}
+
+.mod-selector{display:flex;gap:10px;align-items:end;margin:12px 0}.mod-selector label{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}.mod-selector input{width:100%}.mod-selector button{flex:none}.output-panel>small{display:block;color:#bbb;font-size:12px}.template-settings{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}.template-settings label{display:flex;flex-direction:column;gap:6px;font-size:13px}.template-settings input{width:100%}.template-settings button{margin-top:8px}.preview-panel{grid-template-columns:minmax(0,1fr) 156px 110px;gap:16px}.preview-help p{font-size:12px;line-height:1.7;margin:0 0 10px}.preview-help h2{margin-bottom:10px}#renderStatus{color:#dce9f5;font-variant-numeric:tabular-nums}.output-targets{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}@media(max-width:1100px) and (min-width:851px){.preview-panel{grid-template-columns:minmax(0,1fr) 156px}.preview-panel>.preview-item:last-child{grid-column:2}}@media(max-width:550px){.preview-panel{grid-template-columns:156px 1fr}.preview-help{grid-column:1/-1}.mod-selector{flex-wrap:wrap}.mod-selector label{flex-basis:100%}.template-settings{grid-template-columns:1fr 1fr}}
+
+#localStatus[data-tone="saved"]{color:#79dc98}#localStatus[data-tone="overwritten"]{color:#82baff}#localStatus[data-tone="error"]{color:#ff8585}
+
+#localStatus .export-result{display:block;margin-top:10px}#localStatus .export-result[data-tone="saved"]{color:#79dc98}#localStatus .export-result[data-tone="overwritten"]{color:#82baff}#localStatus .export-result[data-tone="error"]{color:#ff8585}
+
+.right-panel>.preview-panel{margin-top:0}.right-panel>.output-panel{margin-top:16px}
+
+.right-panel>.preview-panel{grid-template-columns:1fr 1fr}.preview-panel>.preview-item:last-child{grid-column:auto}@media(max-width:850px){}
+
+.preview-panel>.preview-help{grid-column:1/-1;background:none;border:none;padding:0;margin:0}.crop-panel h1{margin:0 0 18px}.workspace{align-items:start}
+
+.right-panel>.output-panel{margin-top:0}.right-panel>.preview-panel{margin-top:16px;grid-template-columns:minmax(0,1fr) 156px 100px;align-items:start}.preview-panel>.preview-help{grid-column:1;grid-row:1;background:none;border:none;padding:0;margin:0}.preview-panel>.preview-item:nth-child(2){grid-column:2;grid-row:1}.preview-panel>.preview-item:nth-child(3){grid-column:3;grid-row:1}@media(max-width:550px){.right-panel>.preview-panel{grid-template-columns:minmax(0,1fr) 156px}.preview-panel>.preview-help{grid-row:1/span 2}.preview-panel>.preview-item:nth-child(3){grid-column:2;grid-row:2}}
 </style>
 <main>
-<h1>钢四头像裁剪 · 26∶35</h1>
+
 <div class="workspace">
 <section class="crop-panel" aria-label="图片裁剪">
+<h1>钢四头像裁剪</h1>
 <header><label>导入图片 <input id="file" type="file" accept="image/*"></label></header>
 <div class="controls"><label>倍数 <input id="multiple" type="number" min="1" value="6" step="1" disabled></label><input id="slider" aria-label="裁剪框倍数" type="range" min="1" max="60" value="6" disabled><span id="size">156 × 210 像素</span></div>
 <p class="hint">拖动白框调整位置；滑条或数字调整大小，最高 60 倍。</p>
@@ -17,19 +35,24 @@
 <canvas id="canvas" width="1000" height="600"></canvas>
 </section>
 <aside class="right-panel">
-<details open class="config-panel">
-<summary>本地配置与图片输出</summary>
-<div id="localPanel">
-<p>路径会自动记住。修改模板原文件后，点击“重新加载模板”。</p>
-<div class="controls"><label>大头像背景 <input id="cfgBackground" type="text"></label><button data-choose="background">选择图片</button></div>
-<div class="controls"><label>小顾问上层模板 <input id="cfgAdvisor" type="text"></label><button data-choose="advisor">选择图片</button></div>
-<div class="controls"><label>大头像输出目录 <input id="cfgPortraitDir" type="text"></label><button data-choose="portrait_dir">选择文件夹</button></div>
-<div class="controls"><label>小顾问输出目录 <input id="cfgAdvisorDir" type="text"></label><button data-choose="advisor_dir">选择文件夹</button></div>
-<div class="controls"><button id="applyConfig">保存路径并加载模板</button><button id="reloadTemplates">重新加载模板</button></div>
-<div class="controls"><label>文件名 <input id="outputName" type="text" placeholder="如 GER_example_person"></label><label><input id="overwrite" type="checkbox">覆盖同名文件</label><button id="writePortrait" disabled>保存大头像</button><button id="writeAdvisor" disabled>保存小顾问</button><button id="writeBoth" disabled>保存两张图片</button></div>
+
+<section class="output-panel" aria-label="图片输出">
+<h2>图片输出</h2>
+<div class="mod-selector"><label>钢四模组文件夹 <input id="cfgModRoot" type="text" placeholder="尚未选择，选择后才能保存图片"></label><button data-choose="mod_root">选择模组文件夹</button></div>
+<small>选择后会记住路径。手动修改路径后，请在最下方保存配置。</small>
+<div class="controls output-fields">
+<label class="tag-label">TAG <input id="outputTag" type="text" placeholder="GER" maxlength="3" pattern="[A-Z0-9]{3}" autocomplete="off" required></label>
+<label class="filename-label">人物名字 <input id="outputPerson" type="text" placeholder="example_person" maxlength="80" autocomplete="off" required></label>
+<label class="overwrite-label"><input id="overwrite" type="checkbox">覆盖同名文件</label>
+</div>
+<small class="filename-hint">TAG 为三个大写字母或数字；人物名字不能有空格。文件名：TAG_人物名字.png / TAG_人物名字_small.png</small>
+<div class="controls save-buttons"><button id="writePortrait" disabled>保存大头像</button><button id="writeAdvisor" disabled>保存小顾问</button><button id="writeBoth" disabled>保存两张图片</button></div>
+
 <p id="localStatus" role="status">正在连接本地服务…</p>
-</div></details>
+</section>
 <section class="preview-panel" aria-label="成品预览">
+<div class="preview-help"><h2>预览说明</h2><p>拖动时显示快速预览，仅用于调整构图，不代表最终效果。</p><p>松手后使用 Lanczos＋锐化生成最终成品。处理完成后才能保存；再次拖动会中止上一轮处理。</p><p id="renderStatus" role="status">等待导入图片。</p></div>
+
 <div class="preview-item">
 <h2>大头像 · 156 × 210</h2>
 <img id="preview" alt="成品预览" width="156" height="210" class="checker">
@@ -41,8 +64,21 @@
 <small id="advisorStatus">正在读取 advisor.png…</small>
 <small>逆时针 4.25° · 669 × 864 · (43, 73) → 64 × 64</small>
 </div>
-<p class="preview-note">松手后生成 Lanczos＋锐化成品。可直接保存到输出目录，也可右键图片另存为。</p>
+
 </section>
+<details class="config-panel">
+<summary>本地配置</summary>
+<div id="localPanel">
+<p>填写后点击“保存配置”。重新读取模板只更新已保存路径的图片内容；恢复配置会撤销未保存的输入。</p>
+<div class="template-settings">
+<div><label>大头像背景 <input id="cfgBackground" type="text"></label><button data-choose="background">选择图片</button></div>
+<div><label>小顾问上层模板 <input id="cfgAdvisor" type="text"></label><button data-choose="advisor">选择图片</button></div>
+</div>
+<div class="controls"><label>大头像相对输出路径 <input id="cfgPortraitPattern" type="text" placeholder="gfx\leaders\TAG"></label></div>
+<div class="controls"><label>小顾问相对输出路径 <input id="cfgAdvisorPattern" type="text" placeholder="gfx\interface\ideas"></label></div>
+<small>路径以模组文件夹为起点，其中的 TAG 会替换成上方输入的 TAG。</small>
+<div class="controls"><button id="applyConfig">保存配置</button><button id="reloadTemplates">重新读取模板图片</button><button id="restoreConfig">恢复已保存配置</button></div>
+</div></details>
 </aside>
 </div>
 </main>
@@ -140,10 +176,11 @@ function cropSource(){
  return source;
 }
 let outputFrame=0,qualityTimer=0,sliderActive=false;
-function cancelQuality(){renderVersion++;readyVersion=-1;updateSaveButtons();clearTimeout(qualityTimer);cancelAnimationFrame(outputFrame);cancelAnimationFrame(advisorFrame);}
+function cancelQuality(){if(img)document.getElementById('renderStatus').textContent='快速预览：等待松手后处理。';renderVersion++;readyVersion=-1;updateSaveButtons();clearTimeout(qualityTimer);cancelAnimationFrame(outputFrame);cancelAnimationFrame(advisorFrame);}
 function renderOutput(highQuality=true){
  cancelQuality();const version=renderVersion;
  outputFrame=requestAnimationFrame(async()=>{
+  const started=performance.now();if(img)document.getElementById('renderStatus').textContent=highQuality?'正在生成最终成品…':'快速预览：当前效果不是最终成品。';
   if(img){
    let out;
    if(highQuality){out=await resizeLanczos(cropSource(),156,210,version);if(!out||version!==renderVersion)return;}
@@ -155,7 +192,7 @@ function renderOutput(highQuality=true){
    preview.src=out.toDataURL('image/png');
   }
   await renderAdvisor(highQuality,version);if(version!==renderVersion)return;
-  readyVersion=highQuality&&img?version:-1;updateSaveButtons();
+  readyVersion=highQuality&&img?version:-1;if(highQuality&&img)document.getElementById('renderStatus').textContent='处理完成，用时 '+((performance.now()-started)/1000).toFixed(2)+' 秒。可以保存最终成品。';updateSaveButtons();
   preview.title=advisorPreview.title=highQuality?'清晰成品，可右键保存':'快速预览，松手后生成清晰成品';
  });
 }
@@ -212,18 +249,19 @@ function stop(){if(drag){drag=null;finishQuality();}}canvas.addEventListener('po
 
 const localToken='__LOCAL_TOKEN__';
 const localMode=location.protocol==='http:'&&localToken!=='__'+'LOCAL_TOKEN__';
-const configFields={background:document.getElementById('cfgBackground'),advisor:document.getElementById('cfgAdvisor'),portrait_dir:document.getElementById('cfgPortraitDir'),advisor_dir:document.getElementById('cfgAdvisorDir')};
-const localStatus=document.getElementById('localStatus'),outputName=document.getElementById('outputName');
-let localReady=false,saving=false;
+const configFields={background:document.getElementById('cfgBackground'),advisor:document.getElementById('cfgAdvisor'),mod_root:document.getElementById('cfgModRoot'),portrait_pattern:document.getElementById('cfgPortraitPattern'),advisor_pattern:document.getElementById('cfgAdvisorPattern')};
+const localStatus=document.getElementById('localStatus'),outputTag=document.getElementById('outputTag'),outputPerson=document.getElementById('outputPerson');
+let localReady=false,saving=false,savedConfig=null,configDirty=false;
 async function api(route,data){
  const options=data===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json','X-Local-Token':localToken},body:JSON.stringify(data)};
  const response=await fetch(route,options);const result=await response.json();if(!response.ok)throw Error(result.error||'操作失败');return result;
 }
-function fillConfig(cfg){for(const [key,field] of Object.entries(configFields))field.value=cfg[key];}
+function fillConfig(cfg){savedConfig=cfg;for(const [key,field] of Object.entries(configFields))field.value=cfg[key];configDirty=false;updateSaveButtons();}
+function syncDirty(){configDirty=!savedConfig||Object.entries(configFields).some(([k,v])=>v.value!==savedConfig[k]);updateSaveButtons();}
 function updateSaveButtons(){
  // Called before local controls are initialized only when an actual interaction occurs.
  if(typeof localReady==='undefined')return;
- const ready=localReady&&!saving&&img&&readyVersion===renderVersion;
+ const ready=localReady&&!saving&&!configDirty&&!!savedConfig?.mod_root&&img&&readyVersion===renderVersion;
  document.getElementById('writePortrait').disabled=!ready||!background;
  document.getElementById('writeAdvisor').disabled=!ready||!advisor||advisorPreview.hidden;
  document.getElementById('writeBoth').disabled=!ready||!background||!advisor||advisorPreview.hidden;
@@ -236,42 +274,74 @@ async function reloadTemplates(){
  if(!localReady){updateSaveButtons();throw Error('模板读取失败，请检查配置路径。');}
  renderOutput();updateSaveButtons();
 }
-async function localAction(task){try{await task();}catch(e){localStatus.textContent=e.message;}}
+function setLocalStatus(message,tone='info'){localStatus.textContent=message;localStatus.dataset.tone=tone;}
+function showExportResults(results){
+ localStatus.dataset.tone='info';
+ const messages={saved:'已保存',overwritten:'已覆盖同名文件并保存',exists:'文件已存在，未覆盖',error:'保存失败'};
+ const rows=results.map(result=>{
+  const row=document.createElement('span');
+  row.className='export-result';row.dataset.tone=result.status==='exists'?'error':result.status;
+  const title=result.kind==='portrait'?'大头像':'小顾问';
+  row.textContent=title+'：'+messages[result.status]+'\n'+result.path+(result.status==='error'?'\n'+result.message:'');
+  return row;
+ });
+ localStatus.replaceChildren(...rows);
+}
+async function localAction(task){try{await task();}catch(e){setLocalStatus(e.message,'error');}}
 for(const button of document.querySelectorAll('[data-choose]'))button.addEventListener('click',()=>localAction(async()=>{
- localStatus.textContent='请选择路径（系统选择窗口可能在浏览器后面）…';
- const key=button.dataset.choose;fillConfig(await api('/api/choose',{key}));
- if(key==='background'||key==='advisor')await reloadTemplates();
- localStatus.textContent='设置已保存，下次启动自动使用。';
+ setLocalStatus('请选择路径（系统选择窗口可能在浏览器后面）…');
+ const key=button.dataset.choose;const result=await api('/api/choose',{key});
+ if(!result.path){setLocalStatus('已取消选择。');return;}
+ if(key==='mod_root'){
+  const cfg=await api('/api/config',{mod_root:result.path});savedConfig=cfg;configFields.mod_root.value=cfg.mod_root;syncDirty();
+  setLocalStatus('模组路径已保存。');
+ }else{configFields[key].value=result.path;syncDirty();setLocalStatus('模板路径已选择，请点击下方“保存配置”。');}
 }));
 document.getElementById('applyConfig').addEventListener('click',()=>localAction(async()=>{
  const changes=Object.fromEntries(Object.entries(configFields).map(([k,v])=>[k,v.value]));
- fillConfig(await api('/api/config',changes));await reloadTemplates();localStatus.textContent='配置已保存。';
+ fillConfig(await api('/api/config',changes));await reloadTemplates();setLocalStatus('配置已保存，模板已读取。');
 }));
-for(const [key,field] of Object.entries(configFields))field.addEventListener('change',()=>localAction(async()=>{
- fillConfig(await api('/api/config',{[key]:field.value}));
- if(key==='background'||key==='advisor')await reloadTemplates();
- localStatus.textContent='设置已保存。';
+for(const field of Object.values(configFields))field.addEventListener('input',()=>{syncDirty();setLocalStatus('配置尚未保存，请点击下方“保存配置”或“恢复已保存配置”。');});
+document.getElementById('reloadTemplates').addEventListener('click',()=>localAction(async()=>{
+ await reloadTemplates();setLocalStatus(configDirty?'已重新读取保存路径的模板图片；输入框的修改尚未保存。':'已重新读取已保存路径的模板图片。');
 }));
-document.getElementById('reloadTemplates').addEventListener('click',()=>localAction(async()=>{await reloadTemplates();localStatus.textContent='已重新读取模板原文件。';}));
+document.getElementById('restoreConfig').addEventListener('click',()=>localAction(async()=>{
+ fillConfig(await api('/api/config'));await reloadTemplates();setLocalStatus('已恢复保存的配置，未保存的输入已撤销。');
+}));
+function outputIdentity(){
+ const tag=outputTag.value,person=outputPerson.value;
+ if(!/^[A-Z0-9]{3}$/.test(tag))throw Error('TAG 必须恰好为三个大写字母或数字，例如 GER、A01。');
+ if(!person||person.length>80||/[\s\\/:*?"<>|]/u.test(person)||person.endsWith('.'))throw Error('人物名字不能为空、不能含空格或文件名禁用字符，最多 80 字符，结尾不能是句点。');
+ return {tag,person};
+}
+outputTag.addEventListener('input',()=>{outputTag.value=outputTag.value.toUpperCase();});
 async function writeImages(kind){
+ if(!savedConfig?.mod_root)throw Error('请先选择并保存钢四模组文件夹。');
+ if(configDirty)throw Error('请先保存配置，或恢复已保存配置。');
  if(readyVersion!==renderVersion||saving)throw Error('请等待清晰成品生成后再保存。');
+ const identity=outputIdentity();
  saving=true;updateSaveButtons();
  try{
-  const payload={name:outputName.value.trim(),overwrite:document.getElementById('overwrite').checked};
+  const payload={...identity,overwrite:document.getElementById('overwrite').checked};
   if(kind!=='advisor')payload.portrait=preview.src;
   if(kind!=='portrait')payload.advisor=advisorPreview.src;
-  const result=await api('/api/export',payload);localStatus.textContent='已保存：\n'+result.paths.join('\n');
+  const result=await api('/api/export',payload);showExportResults(result.results);
  }finally{saving=false;updateSaveButtons();}
 }
 for(const [id,kind] of [['writePortrait','portrait'],['writeAdvisor','advisor'],['writeBoth','both']])document.getElementById(id).addEventListener('click',()=>localAction(()=>writeImages(kind)));
-file.addEventListener('change',()=>{const f=file.files[0];if(f)outputName.value=f.name.replace(/\.[^.]+$/,'').replace(/[^\p{L}\p{N}_-]/gu,'_');});
+file.addEventListener('change',()=>{
+ const f=file.files[0];if(!f)return;
+ const base=f.name.replace(/\.[^.]+$/,'');const match=base.match(/^([A-Z0-9]{3})_(.+)$/u);
+ if(match)outputTag.value=match[1];
+ outputPerson.value=(match?match[2]:base).replace(/[\s\\/:*?"<>|]/gu,'_').replace(/\.+$/,'').slice(0,80);
+});
 async function initLocal(){
  if(!localMode){
-  document.querySelectorAll('#localPanel input,#localPanel button').forEach(e=>e.disabled=true);
-  localStatus.textContent='请双击“启动头像工具.cmd”，通过本地服务打开页面，以使用配置和直接保存。';
+  document.querySelectorAll('#localPanel input,#localPanel button,.output-panel input,.output-panel button').forEach(e=>e.disabled=true);
+  setLocalStatus('请双击“启动头像工具.cmd”，通过本地服务打开页面，以使用配置和直接保存。');
   return;
  }
- await localAction(async()=>{fillConfig(await api('/api/config'));await reloadTemplates();localStatus.textContent='本地配置已加载。请选择输出目录；新设置会自动记住。';});
+ await localAction(async()=>{fillConfig(await api('/api/config'));await reloadTemplates();setLocalStatus('本地配置已加载。请在上方选择模组文件夹；配置可在最下方展开。');});
 }
 initLocal();
 

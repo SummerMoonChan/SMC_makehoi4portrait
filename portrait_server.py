@@ -3,7 +3,7 @@ import argparse
 import base64
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import re
 import secrets
 import struct
@@ -15,8 +15,8 @@ from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parent
 CONFIG = ROOT / 'portrait-config.json'
-DEFAULTS = {'background': 'background.png', 'advisor': 'advisor.png',
-            'portrait_dir': 'output/portraits', 'advisor_dir': 'output/advisors'}
+DEFAULTS = {'background': 'background.png', 'advisor': 'advisor.png', 'mod_root': '',
+            'portrait_pattern': r'gfx\leaders\TAG', 'advisor_pattern': r'gfx\interface\ideas'}
 LOCK = threading.RLock()
 DIALOG_LOCK = threading.Lock()
 TOKEN = secrets.token_urlsafe(32)
@@ -47,25 +47,52 @@ def png_size(data):
         raise ValueError('请选择有效的 PNG 图片。')
     return struct.unpack('>II', data[16:24])
 
+def validate_pattern(value):
+    pattern = PureWindowsPath(value)
+    if not value.strip() or pattern.is_absolute() or pattern.drive or pattern.root or '..' in pattern.parts:
+        raise ValueError('输出路径必须是模组内的相对路径，不能包含 .. 或盘符。')
+    if any(re.search(r'[:*?"<>|]', part) or part.endswith(('.', ' ')) for part in pattern.parts):
+        raise ValueError('输出路径含有文件夹禁用字符。')
+    return pattern
+
+
+def output_directory(cfg, key, tag):
+    if not cfg.get('mod_root'):
+        raise ValueError('请先选择并保存钢四模组文件夹。')
+    mod = resolve_path(cfg['mod_root'])
+    if not mod.is_dir():
+        raise ValueError('模组文件夹不存在，请重新选择。')
+    parts = validate_pattern(cfg[key].replace('TAG', tag)).parts
+    directory = mod.joinpath(*parts).resolve()
+    if not directory.is_relative_to(mod):
+        raise ValueError('输出位置必须位于所选模组内。')
+    return directory
+
+
 def update_config(changes):
     with LOCK:
         cfg = read_config()
         for key, value in changes.items():
-            if key not in DEFAULTS or not isinstance(value, str) or not value.strip():
+            if key not in DEFAULTS or not isinstance(value, str):
                 raise ValueError('配置项目或路径无效。')
-            p = resolve_path(value.strip())
-            if key in ('background', 'advisor'):
-                w, h = png_size(p.read_bytes())
+            value = value.strip()
+            if key == 'mod_root':
+                if value and not resolve_path(value).is_dir():
+                    raise ValueError('模组文件夹不存在，请选择有效目录。')
+            elif key in ('portrait_pattern', 'advisor_pattern'):
+                validate_pattern(value)
+            elif key in ('background', 'advisor'):
+                if not value:
+                    raise ValueError('模板路径不能为空。')
+                w, h = png_size(resolve_path(value).read_bytes())
                 if key == 'advisor' and (w < 712 or h < 937):
                     raise ValueError('小顾问模板至少需要 712 × 937 像素。')
-            elif p.exists() and not p.is_dir():
-                raise ValueError('输出位置必须是文件夹。')
-            cfg[key] = value.strip()
+            cfg[key] = value
         atomic_write(CONFIG, (json.dumps(cfg, ensure_ascii=False, indent=2) + '\n').encode('utf-8'))
         return cfg
 
 def choose_path(key):
-    if key not in DEFAULTS:
+    if key not in ('background', 'advisor', 'mod_root'):
         raise ValueError('未知设置。')
     import tkinter as tk
     from tkinter import filedialog
@@ -74,7 +101,7 @@ def choose_path(key):
         ui.withdraw()
         ui.attributes('-topmost', True)
         try:
-            old = resolve_path(read_config()[key])
+            old = resolve_path(read_config()[key] or str(ROOT))
             initial = old.parent if key in ('background', 'advisor') else old
             if not initial.is_dir():
                 initial = ROOT
@@ -84,16 +111,25 @@ def choose_path(key):
         finally:
             ui.destroy()
 
+def output_stem(payload):
+    tag = payload.get('tag', '')
+    person = payload.get('person', '')
+    if not isinstance(tag, str) or not re.fullmatch(r'[A-Z0-9]{3}', tag):
+        raise ValueError('TAG 必须恰好为三个大写字母或数字。')
+    if (not isinstance(person, str) or not person or len(person) > 80
+            or re.search(r'[\s\\/:*?"<>|]', person) or person.endswith('.')):
+        raise ValueError('人物名字不能为空、不能含空格或文件名禁用字符，最多 80 字符，结尾不能是句点。')
+    return tag + '_' + person
+
+
 def export_images(payload):
-    stem = payload.get('name', '')
-    if not isinstance(stem, str) or not re.fullmatch(r'[\w\-]+', stem) or len(stem) > 100:
-        raise ValueError('文件名请使用文字、数字、下划线或短横线（最多 100 字符）。')
-    if stem.split('.')[0].upper() in {'CON','PRN','AUX','NUL',*(f'COM{i}' for i in range(1,10)),*(f'LPT{i}' for i in range(1,10))}:
-        raise ValueError('这个文件名是 Windows 保留名称。')
+    stem = output_stem(payload)
     with LOCK:
         cfg = read_config()
+        if not cfg.get('mod_root'):
+            raise ValueError('请先选择并保存钢四模组文件夹。')
         outputs = []
-        for key, directory, suffix in [('portrait', 'portrait_dir', ''), ('advisor', 'advisor_dir', '_advisor')]:
+        for key, directory, suffix in [('portrait', 'portrait_pattern', ''), ('advisor', 'advisor_pattern', '_small')]:
             value = payload.get(key)
             if value is None:
                 continue
@@ -104,15 +140,24 @@ def export_images(payload):
             expected = (156,210) if key == 'portrait' else (64,64)
             if dimensions != expected:
                 raise ValueError('预览尺寸与设置不一致，请重新加载模板后输出。')
-            outputs.append((resolve_path(cfg[directory]) / (stem + suffix + '.png'), data))
+            outputs.append((key, output_directory(cfg, directory, payload['tag']) / (stem + suffix + '.png'), data))
         if not outputs:
             raise ValueError('请先生成成品预览。')
-        for path, _ in outputs:
-            if path.exists() and payload.get('overwrite') is not True:
-                raise ValueError('文件已存在：' + str(path) + '。请换文件名，或勾选覆盖同名文件。')
-        for path, data in outputs:
-            atomic_write(path, data)
-        return [str(path) for path, _ in outputs]
+        results = []
+        for key, path, data in outputs:
+            exists = path.exists()
+            if exists and payload.get('overwrite') is not True:
+                results.append({'kind': key, 'path': str(path), 'status': 'exists', 'message': '文件已存在，未覆盖'})
+                continue
+            try:
+                atomic_write(path, data)
+                results.append({'kind': key, 'path': str(path), 'status': 'overwritten' if exists else 'saved'})
+            except OSError as error:
+                results.append({'kind': key, 'path': str(path), 'status': 'error', 'message': str(error)})
+        return {'results': results,
+                'paths': [r['path'] for r in results if r['status'] in ('saved', 'overwritten')],
+                'overwritten': [r['path'] for r in results if r['status'] == 'overwritten']}
+
 
 class Handler(BaseHTTPRequestHandler):
     def send_data(self, code, data, kind='application/json; charset=utf-8'):
@@ -166,9 +211,9 @@ class Handler(BaseHTTPRequestHandler):
             elif route == '/api/choose':
                 key = payload.get('key')
                 selected = choose_path(key)
-                result = update_config({key: selected}) if selected else read_config()
+                result = {'path': selected}
             elif route == '/api/export':
-                result = {'paths': export_images(payload)}
+                result = export_images(payload)
             else:
                 self.send_data(404, {'error': 'Not found'})
                 return
