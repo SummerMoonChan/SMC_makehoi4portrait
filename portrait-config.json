@@ -1,7 +1,8 @@
 {
   "background": "background.png",
   "advisor": "advisor.png",
-  "mod_root": "C:/Users/chenwenjia/Documents/Paradox Interactive/Hearts of Iron IV/mod/EOE",
+  "mod_root": "",
   "portrait_pattern": "gfx/leaders/TAG",
-  "advisor_pattern": "gfx/leaders/TAG/advisor"
+  "advisor_pattern": "gfx/leaders/TAG/advisor",
+  "gfx_file": "EOE_leader_portraits.gfx"
 }

@@ -12,11 +12,12 @@ import threading
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
+from gfx_writer import validate_gfx_name, gfx_path, rewrite_gfx, read_gfx, encode_gfx
 
 ROOT = Path(__file__).resolve().parent
 CONFIG = ROOT / 'portrait-config.json'
 DEFAULTS = {'background': 'background.png', 'advisor': 'advisor.png', 'mod_root': '',
-            'portrait_pattern': r'gfx\leaders\TAG', 'advisor_pattern': r'gfx\interface\ideas'}
+            'portrait_pattern': r'gfx\leaders\TAG', 'advisor_pattern': r'gfx\interface\ideas', 'gfx_file': 'SMC_portraits.gfx'}
 LOCK = threading.RLock()
 DIALOG_LOCK = threading.Lock()
 TOKEN = secrets.token_urlsafe(32)
@@ -79,6 +80,8 @@ def update_config(changes):
             if key == 'mod_root':
                 if value and not resolve_path(value).is_dir():
                     raise ValueError('模组文件夹不存在，请选择有效目录。')
+            elif key == 'gfx_file':
+                validate_gfx_name(value)
             elif key in ('portrait_pattern', 'advisor_pattern'):
                 validate_pattern(value)
             elif key in ('background', 'advisor'):
@@ -143,6 +146,16 @@ def export_images(payload):
             outputs.append((key, output_directory(cfg, directory, payload['tag']) / (stem + suffix + '.png'), data))
         if not outputs:
             raise ValueError('请先生成成品预览。')
+        mod = resolve_path(cfg['mod_root'])
+        target = gfx_path(mod, cfg['gfx_file'])
+        eligible = [(key, path) for key, path, _ in outputs if not path.exists() or payload.get('overwrite') is True]
+        original, gfx_text = read_gfx(target) if eligible else (None, '')
+        def entry(key, path):
+            suffix = '_small' if key == 'advisor' else ''
+            return ('GFX_portrait_' + stem + suffix, path.relative_to(mod).as_posix())
+        # Validate syntax before writing any images.
+        if eligible:
+            rewrite_gfx(gfx_text, [entry(key, path) for key, path in eligible])
         results = []
         for key, path, data in outputs:
             exists = path.exists()
@@ -154,7 +167,24 @@ def export_images(payload):
                 results.append({'kind': key, 'path': str(path), 'status': 'overwritten' if exists else 'saved'})
             except OSError as error:
                 results.append({'kind': key, 'path': str(path), 'status': 'error', 'message': str(error)})
-        return {'results': results,
+        successful = [r for r in results if r['status'] in ('saved', 'overwritten')]
+        interface_result = {'path': str(target), 'status': 'skipped', 'message': '没有成功保存的图片，未修改 Interface。'}
+        if successful:
+            try:
+                updated = rewrite_gfx(gfx_text, [entry(r['kind'], Path(r['path'])) for r in successful])
+                encoded = encode_gfx(updated, original)
+                current = target.read_bytes() if target.exists() else None
+                if current != original:
+                    raise ValueError('GFX 在处理期间被其他程序修改，未覆盖；请重新保存。')
+                if encoded != original:
+                    if original is not None:
+                        atomic_write(target.with_name(target.name + '.bak'), original)
+                    atomic_write(target, encoded)
+                interface_result = {'path': str(target), 'status': ('saved' if original is None else 'overwritten') if encoded != original else 'unchanged',
+                                    'message': '已创建 GFX' if original is None else '已更新 GFX' if encoded != original else 'GFX 条目已是最新，无需修改'}
+            except (OSError, ValueError) as error:
+                interface_result = {'path': str(target), 'status': 'error', 'message': str(error)}
+        return {'results': results, 'interface': interface_result,
                 'paths': [r['path'] for r in results if r['status'] in ('saved', 'overwritten')],
                 'overwritten': [r['path'] for r in results if r['status'] == 'overwritten']}
 
