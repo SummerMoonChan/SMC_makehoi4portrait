@@ -177,8 +177,6 @@ def export_images(payload):
                 if current != original:
                     raise ValueError('GFX 在处理期间被其他程序修改，未覆盖；请重新保存。')
                 if encoded != original:
-                    if original is not None:
-                        atomic_write(target.with_name(target.name + '.bak'), original)
                     atomic_write(target, encoded)
                 interface_result = {'path': str(target), 'status': ('saved' if original is None else 'overwritten') if encoded != original else 'unchanged',
                                     'message': '已创建 GFX' if original is None else '已更新 GFX' if encoded != original else 'GFX 条目已是最新，无需修改'}
